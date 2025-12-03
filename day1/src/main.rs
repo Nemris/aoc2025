@@ -34,10 +34,13 @@ impl error::Error for Error {}
 struct Dial {
     max: u8,
     position: u8,
+    clicks: usize,
 }
 
 impl Dial {
     fn rotate(&mut self, r: &Rotation) -> &mut Self {
+        self.clicks += self.count_clicks(r);
+
         // Moving e.g. 100 steps to the right equals moving zero steps.
         // Truncation cannot happen here, the highest rotation is 999.
         #[allow(clippy::cast_possible_truncation)]
@@ -45,6 +48,7 @@ impl Dial {
             Rotation::Left(n) => self.rotate_left((n % usize::from(self.max)) as u8),
             Rotation::Right(n) => self.rotate_right((n % usize::from(self.max)) as u8),
         };
+
         self
     }
 
@@ -59,6 +63,22 @@ impl Dial {
     fn rotate_right(&mut self, steps: u8) -> &mut Self {
         self.position = (self.position + steps) % self.max;
         self
+    }
+
+    fn count_clicks(&self, r: &Rotation) -> usize {
+        let pos = usize::from(self.position);
+
+        match r {
+            Rotation::Left(n) => {
+                if pos <= *n {
+                    let clicks = (n - pos) / usize::from(self.max);
+                    if pos > 0 { clicks + 1 } else { clicks }
+                } else {
+                    0
+                }
+            }
+            Rotation::Right(n) => (pos + n) / usize::from(self.max),
+        }
     }
 }
 
@@ -106,6 +126,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let mut dial = Dial {
         max: 100,
         position: 50,
+        clicks: 0,
     };
     let rotations = fs::read_to_string(&args[1])?
         .lines()
@@ -113,6 +134,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         .collect::<Result<Vec<_>, _>>()?;
 
     println!("Key: {}", compute_key(&mut dial, &rotations));
+    println!("Clicks: {}", dial.clicks);
 
     Ok(())
 }
@@ -142,6 +164,7 @@ mod tests {
         let mut d = Dial {
             max: 100,
             position: 50,
+            clicks: 0,
         };
         d.rotate_left(1);
 
@@ -153,6 +176,7 @@ mod tests {
         let mut d = Dial {
             max: 100,
             position: 50,
+            clicks: 0,
         };
         d.rotate_right(1);
 
@@ -164,6 +188,7 @@ mod tests {
         let mut d = Dial {
             max: 100,
             position: 0,
+            clicks: 0,
         };
         d.rotate_left(1);
 
@@ -175,6 +200,7 @@ mod tests {
         let mut d = Dial {
             max: 100,
             position: 99,
+            clicks: 0,
         };
         d.rotate_right(1);
 
@@ -186,6 +212,7 @@ mod tests {
         let mut d = Dial {
             max: 100,
             position: 50,
+            clicks: 0,
         };
         let rs = test_data()
             .iter()
@@ -196,5 +223,56 @@ mod tests {
         let k = compute_key(&mut d, &rs);
 
         assert_eq!(k, 3);
+    }
+
+    #[test]
+    fn clicks_are_counted_correctly() {
+        let mut d = Dial {
+            max: 100,
+            position: 50,
+            clicks: 0,
+        };
+        let rs = test_data()
+            .iter()
+            .map(|s| Rotation::from_str(s))
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+
+        let _ = compute_key(&mut d, &rs);
+
+        assert_eq!(d.clicks, 6);
+    }
+
+    #[test]
+    fn clicks_are_counted_correctly_in_big_rotation() {
+        let mut d = Dial {
+            max: 100,
+            position: 50,
+            clicks: 0,
+        };
+
+        d.rotate(&Rotation::Right(1000));
+
+        assert_eq!(d.clicks, 10);
+    }
+
+    #[test]
+    fn clicks_are_counted_correctly_in_edge_cases() {
+        let mut d = Dial {
+            max: 100,
+            position: 6,
+            clicks: 0,
+        };
+
+        d.rotate(&Rotation::Left(14));
+        assert_eq!(d.clicks, 1);
+
+        d.position = 0;
+        d.rotate(&Rotation::Left(1));
+        assert_eq!(d.clicks, 1);
+
+        d.position = 0;
+        d.rotate(&Rotation::Left(100));
+        assert_eq!(d.clicks, 2);
     }
 }
