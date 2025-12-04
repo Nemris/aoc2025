@@ -3,6 +3,37 @@
 use std::num::ParseIntError;
 use std::ops::RangeInclusive;
 
+/// Finds the invalid IDs in a range.
+#[must_use]
+pub fn find_invalid_ids(range: &RangeInclusive<usize>) -> Option<Vec<usize>> {
+    // Determine the actual bounds where invalid IDs may be found..
+    let start = if digits(*range.start()).is_multiple_of(2) {
+        *range.start()
+    } else {
+        next_power_of_10(*range.start())
+    };
+    let end = if digits(*range.end()).is_multiple_of(2) {
+        *range.end()
+    } else {
+        prev_power_of_10(*range.end())
+    };
+
+    // We don't know if this can happen in the data, but we know it is invalid.
+    if start > end {
+        return None;
+    }
+
+    let invalid_ids = (start..=end)
+        .filter(|id| !is_id_valid(*id))
+        .collect::<Vec<_>>();
+
+    if invalid_ids.is_empty() {
+        None
+    } else {
+        Some(invalid_ids)
+    }
+}
+
 /// Attempts to parse a string slice into a series of inclusive ranges.
 pub fn parse_ranges(s: &str) -> Result<Vec<RangeInclusive<usize>>, ParseIntError> {
     let mut ranges = vec![];
@@ -116,5 +147,27 @@ mod tests {
         assert_eq!(digits(42), 2);
         assert_eq!(digits(999), 3);
         assert_eq!(digits(1000), 4);
+    }
+
+    #[test]
+    fn invalid_ids_are_identified_correctly() {
+        let rs = parse_ranges(test_data()).unwrap();
+        let expected = &[
+            Some(vec![11, 22]),
+            Some(vec![99]),
+            Some(vec![1010]),
+            Some(vec![1188511885]),
+            Some(vec![222222]),
+            None,
+            Some(vec![446446]),
+            Some(vec![38593859]),
+            None,
+            None,
+            None,
+        ];
+
+        for (r, e) in rs.iter().zip(expected) {
+            assert_eq!(find_invalid_ids(r), *e);
+        }
     }
 }
