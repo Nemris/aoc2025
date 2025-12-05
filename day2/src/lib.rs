@@ -4,11 +4,7 @@ use std::num::ParseIntError;
 use std::ops::RangeInclusive;
 
 pub fn sum_invalid_ids(ranges: &[RangeInclusive<usize>]) -> usize {
-    ranges
-        .iter()
-        .filter_map(find_invalid_ids)
-        .flatten()
-        .sum()
+    ranges.iter().filter_map(find_invalid_ids).flatten().sum()
 }
 
 /// Finds the invalid IDs in a range.
