@@ -3,6 +3,14 @@
 use std::num::ParseIntError;
 use std::ops::RangeInclusive;
 
+pub fn sum_invalid_ids(ranges: &[RangeInclusive<usize>]) -> usize {
+    ranges
+        .iter()
+        .filter_map(find_invalid_ids)
+        .flatten()
+        .sum()
+}
+
 /// Finds the invalid IDs in a range.
 #[must_use]
 pub fn find_invalid_ids(range: &RangeInclusive<usize>) -> Option<Vec<usize>> {
@@ -105,6 +113,13 @@ mod tests {
         let rs = parse_ranges(test_data()).unwrap();
 
         assert_eq!(rs.len(), 11);
+    }
+
+    #[test]
+    fn invalid_ids_produce_expected_total() {
+        let rs = parse_ranges(test_data()).unwrap();
+
+        assert_eq!(sum_invalid_ids(&rs), 1227775554);
     }
 
     #[test]
