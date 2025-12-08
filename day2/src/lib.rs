@@ -55,6 +55,29 @@ pub fn parse_ranges(s: &str) -> Result<Vec<RangeInclusive<usize>>, ParseIntError
     Ok(ranges)
 }
 
+/// Computes the subranges of a range, such that for all ranges the number of digits of `r.begin()`
+/// and`r.end()` are the same.
+#[must_use]
+pub fn compute_subranges(r: &RangeInclusive<usize>) -> Vec<RangeInclusive<usize>> {
+    fn inner(r: RangeInclusive<usize>, rs: &mut Vec<RangeInclusive<usize>>) {
+        if digits(*r.start()) == digits(*r.end()) {
+            rs.push(r);
+            return;
+        }
+
+        let midpoint = next_power_of_10(*r.start());
+        let r1 = RangeInclusive::new(*r.start(), midpoint - 1);
+        let r2 = RangeInclusive::new(midpoint, *r.end());
+
+        inner(r1, rs);
+        inner(r2, rs);
+    }
+
+    let mut subranges = vec![];
+    inner(r.clone(), &mut subranges);
+    subranges
+}
+
 /// Checks if `id` is valid.
 #[must_use]
 pub fn is_id_valid(id: usize) -> bool {
@@ -208,6 +231,28 @@ mod tests {
         for (r, e) in rs.iter().zip(expected) {
             assert_eq!(find_invalid_ids(r), *e);
         }
+    }
+
+    #[test]
+    fn subranges_are_computed_correctly() {
+        let r = RangeInclusive::new(10usize, 20usize);
+        let v = vec![r.clone()];
+        assert_eq!(compute_subranges(&r), v);
+
+        let r = RangeInclusive::new(95usize, 115usize);
+        let v = vec![
+            RangeInclusive::new(95usize, 99usize),
+            RangeInclusive::new(100usize, 115usize),
+        ];
+        assert_eq!(compute_subranges(&r), v);
+
+        let r = RangeInclusive::new(99usize, 1001usize);
+        let v = vec![
+            RangeInclusive::new(99usize, 99usize),
+            RangeInclusive::new(100usize, 999usize),
+            RangeInclusive::new(1000usize, 1001usize),
+        ];
+        assert_eq!(compute_subranges(&r), v);
     }
 
     #[test]
