@@ -27,9 +27,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         return Err(Box::new(Error::MissingInputFile));
     }
 
-    let ranges = day2::parse_ranges(
-        fs::read_to_string(&args[1])?.trim_end()
-    )?;
+    let ranges = day2::parse_ranges(fs::read_to_string(&args[1])?.trim_end())?;
     println!("Sum of invalid IDs: {}", day2::sum_invalid_ids(&ranges));
 
     Ok(())
