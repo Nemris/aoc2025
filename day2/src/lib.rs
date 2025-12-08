@@ -96,6 +96,34 @@ pub fn digits(n: usize) -> usize {
     }
 }
 
+/// Splits a number into its digits.
+#[must_use]
+pub fn split_digits(mut n: usize) -> Vec<usize> {
+    let mut ds = Vec::with_capacity(digits(n));
+
+    while n > 0 {
+        ds.push(n % 10);
+        n /= 10;
+    }
+    ds.reverse();
+
+    ds
+}
+
+/// Joins the digits of a number.
+#[must_use]
+pub fn join_digits(ds: &[usize]) -> usize {
+    let mut n = 0;
+
+    // Digits are smaller than i32::MAX.
+    #[allow(clippy::cast_possible_truncation)]
+    for (i, d) in ds.iter().rev().enumerate() {
+        n += d * 10usize.pow(i as u32);
+    }
+
+    n
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -180,5 +208,19 @@ mod tests {
         for (r, e) in rs.iter().zip(expected) {
             assert_eq!(find_invalid_ids(r), *e);
         }
+    }
+
+    #[test]
+    fn numbers_are_split_correctly() {
+        assert_eq!(split_digits(100), vec![1, 0, 0]);
+        assert_eq!(split_digits(42), vec![4, 2]);
+        assert_eq!(split_digits(1), vec![1]);
+    }
+
+    #[test]
+    fn digits_are_joined_correctly() {
+        assert_eq!(join_digits(&[1, 0, 0]), 100);
+        assert_eq!(join_digits(&[4, 2]), 42);
+        assert_eq!(join_digits(&[1]), 1);
     }
 }
