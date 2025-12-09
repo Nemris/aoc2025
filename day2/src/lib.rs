@@ -135,15 +135,23 @@ pub fn guess_invalid_ids(r: &RangeInclusive<usize>, pattern_length: usize) -> Ve
         let pattern_chunks = pattern_digits.chunks(pattern_length);
         let end_chunks = end_digits.chunks(pattern_length);
         if pattern_chunks.gt(end_chunks) {
-            return patterns;
+            break;
         }
 
         patterns.push(join_digits(&pattern_digits));
 
+        // Stop if increasing the pattern would bring us to the next power of 10.
+        if pattern_digits[..pattern_length].iter().all(|&x| x == 9) {
+            break;
+        }
+
+        // Prepare the next pattern to check.
         for c in pattern_digits.chunks_mut(pattern_length) {
             c.copy_from_slice(split_digits(join_digits(c) + 1).as_mut_slice());
         }
     }
+
+    patterns
 }
 
 /// Counts the digits in `n`.
@@ -305,6 +313,10 @@ mod tests {
     fn invalid_ids_are_discovered_correctly() {
         let r = RangeInclusive::new(11usize, 22usize);
         let v = vec![11, 22];
+        assert_eq!(guess_invalid_ids(&r, 1), v);
+
+        let r = RangeInclusive::new(99usize, 99usize);
+        let v = vec![99];
         assert_eq!(guess_invalid_ids(&r, 1), v);
 
         let r = RangeInclusive::new(1188511880usize, 1188511890usize);
