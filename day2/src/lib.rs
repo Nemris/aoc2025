@@ -117,6 +117,35 @@ pub fn next_power_of_10(n: usize) -> usize {
     10usize.pow(digits(n) as u32)
 }
 
+/// Guesses the invalid IDs in a range.
+///
+/// Both ends of the range must have the same amount of digits. Moreover, `pattern_length` must
+/// divide the number of digits cleanly.
+#[must_use]
+pub fn guess_invalid_ids(r: &RangeInclusive<usize>, pattern_length: usize) -> Vec<usize> {
+    let mut pattern_digits = split_digits(*r.start())
+        .chunks(pattern_length)
+        .max()
+        .expect("chunks should not be empty")
+        .repeat(digits(*r.start()) / pattern_length);
+    let end_digits = split_digits(*r.end());
+
+    let mut patterns = vec![];
+    loop {
+        let pattern_chunks = pattern_digits.chunks(pattern_length);
+        let end_chunks = end_digits.chunks(pattern_length);
+        if pattern_chunks.gt(end_chunks) {
+            return patterns;
+        }
+
+        patterns.push(join_digits(&pattern_digits));
+
+        for c in pattern_digits.chunks_mut(pattern_length) {
+            c.copy_from_slice(split_digits(join_digits(c) + 1).as_mut_slice());
+        }
+    }
+}
+
 /// Counts the digits in `n`.
 #[must_use]
 pub fn digits(n: usize) -> usize {
@@ -270,6 +299,17 @@ mod tests {
         assert_eq!(guess_pattern_lengths(11111), vec![1]);
         assert_eq!(guess_pattern_lengths(111111), vec![1, 2, 3]);
         assert_eq!(guess_pattern_lengths(111111111), vec![1, 3]);
+    }
+
+    #[test]
+    fn invalid_ids_are_discovered_correctly() {
+        let r = RangeInclusive::new(11usize, 22usize);
+        let v = vec![11, 22];
+        assert_eq!(guess_invalid_ids(&r, 1), v);
+
+        let r = RangeInclusive::new(1188511880usize, 1188511890usize);
+        let v = vec![1188511885];
+        assert_eq!(guess_invalid_ids(&r, 5), v);
     }
 
     #[test]
