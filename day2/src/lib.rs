@@ -78,6 +78,13 @@ pub fn compute_subranges(r: &RangeInclusive<usize>) -> Vec<RangeInclusive<usize>
     subranges
 }
 
+/// Determines the possible pattern lengths of `n`.
+#[must_use]
+pub fn guess_pattern_lengths(n: usize) -> Vec<usize> {
+    let d = digits(n);
+    (1..=d / 2).filter(|&i| d.is_multiple_of(i)).collect()
+}
+
 /// Checks if `id` is valid.
 #[must_use]
 pub fn is_id_valid(id: usize) -> bool {
@@ -253,6 +260,16 @@ mod tests {
             RangeInclusive::new(1000usize, 1001usize),
         ];
         assert_eq!(compute_subranges(&r), v);
+    }
+
+    #[test]
+    fn possible_pattern_lengths_are_guessed_correctly() {
+        assert_eq!(guess_pattern_lengths(11), vec![1]);
+        assert_eq!(guess_pattern_lengths(111), vec![1]);
+        assert_eq!(guess_pattern_lengths(1111), vec![1, 2]);
+        assert_eq!(guess_pattern_lengths(11111), vec![1]);
+        assert_eq!(guess_pattern_lengths(111111), vec![1, 2, 3]);
+        assert_eq!(guess_pattern_lengths(111111111), vec![1, 3]);
     }
 
     #[test]
