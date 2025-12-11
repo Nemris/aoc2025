@@ -35,6 +35,14 @@ fn solve_part_1(ranges: &[RangeInclusive<usize>]) -> usize {
         .sum()
 }
 
+/// Solve part 2 of day 2.
+fn solve_part_2(ranges: &[RangeInclusive<usize>]) -> usize {
+    ranges
+        .iter()
+        .flat_map(day2::find_invalid_ids)
+        .sum()
+}
+
 fn main() -> Result<(), Box<dyn error::Error>> {
     let args = env::args().collect::<Vec<_>>();
     if args.len() != 2 {
@@ -43,7 +51,8 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     }
 
     let ranges = day2::parse_ranges(fs::read_to_string(&args[1])?.trim_end())?;
-    println!("Sum of invalid IDs: {}", solve_part_1(&ranges));
+    println!("Sum of filtered invalid IDs: {}", solve_part_1(&ranges));
+    println!("Sum of all invalid IDs: {}", solve_part_2(&ranges));
 
     Ok(())
 }
