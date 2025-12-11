@@ -138,13 +138,20 @@ pub fn guess_invalid_ids(r: &RangeInclusive<usize>, pattern_length: usize) -> Ve
 ///
 /// In order to ensure `digits.len()` remains the same, the increase is capped at the next power of
 /// 10 minus one.
-pub fn increment_chunks(digits: &mut [usize], chunk_size: usize) {
+/// If no chunk can be increased, returns `None`.
+pub fn increment_chunks(digits: &mut [usize], chunk_size: usize) -> Option<()> {
+    if digits.chunks(chunk_size).all(|c| c.iter().all(|&n| n == 9)) {
+        return None;
+    }
+
     for c in digits.chunks_mut(chunk_size) {
         if c.iter().all(|&n| n == 9) {
             continue;
         }
         c.copy_from_slice(split_digits(join_digits(c) + 1).as_mut_slice());
     }
+
+    Some(())
 }
 
 /// Counts the digits in `n`.
@@ -331,20 +338,29 @@ mod tests {
     #[test]
     fn increment_by_chunk_is_performed_correctly() {
         let mut ds = split_digits(101112);
-        increment_chunks(&mut ds, 2);
+        let r = increment_chunks(&mut ds, 2);
         assert_eq!(ds, split_digits(111213));
+        assert!(r.is_some());
 
         let mut ds = split_digits(101112);
-        increment_chunks(&mut ds, 3);
+        let r = increment_chunks(&mut ds, 3);
         assert_eq!(ds, split_digits(102113));
+        assert!(r.is_some());
 
         let mut ds = split_digits(2020202020);
-        increment_chunks(&mut ds, 1);
+        let r = increment_chunks(&mut ds, 1);
         assert_eq!(ds, split_digits(3131313131));
+        assert!(r.is_some());
 
         let mut ds = split_digits(9999999998);
-        increment_chunks(&mut ds, 5);
+        let r = increment_chunks(&mut ds, 5);
         assert_eq!(ds, split_digits(9999999999));
+        assert!(r.is_some());
+
+        let mut ds = split_digits(99);
+        let r = increment_chunks(&mut ds, 1);
+        assert_eq!(ds, split_digits(99));
+        assert!(r.is_none());
     }
 
     #[test]
