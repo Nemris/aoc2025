@@ -125,11 +125,24 @@ pub fn next_power_of_10(n: usize) -> usize {
 pub fn guess_invalid_ids(r: &RangeInclusive<usize>, pattern_length: usize) -> Vec<usize> {
     let mut pattern_digits = split_digits(*r.start())
         .chunks(pattern_length)
-        .max()
+        .next()
         .expect("chunks should not be empty")
         .repeat(digits(*r.start()) / pattern_length);
-    let end_digits = split_digits(*r.end());
 
+    // First pass: identify the starting pattern.
+    let start_digits = split_digits(*r.start());
+    loop {
+        let pattern_chunks = pattern_digits.chunks(pattern_length);
+        let start_chunks = start_digits.chunks(pattern_length);
+        if pattern_chunks.ge(start_chunks) {
+            break;
+        }
+        for c in pattern_digits.chunks_mut(pattern_length) {
+            c.copy_from_slice(split_digits(join_digits(c) + 1).as_mut_slice());
+        }
+    }
+
+    let end_digits = split_digits(*r.end());
     let mut patterns = vec![];
     loop {
         let pattern_chunks = pattern_digits.chunks(pattern_length);
