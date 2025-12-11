@@ -66,20 +66,6 @@ pub fn guess_pattern_lengths(n: usize) -> Vec<usize> {
     (1..=d / 2).filter(|&i| d.is_multiple_of(i)).collect()
 }
 
-/// Checks if `id` is valid.
-#[must_use]
-pub fn is_id_valid(id: usize) -> bool {
-    if !digits(id).is_multiple_of(2) {
-        return true;
-    }
-
-    // The digits in a usize are always smaller than u32::MAX.
-    #[allow(clippy::cast_possible_truncation)]
-    let divisor = 10usize.pow(digits(id) as u32 / 2);
-
-    id / divisor != id % divisor
-}
-
 /// Computes the next power of 10 greater than `n`.
 #[must_use]
 pub fn next_power_of_10(n: usize) -> usize {
@@ -217,23 +203,6 @@ mod tests {
         let ids = rs.iter().flat_map(find_invalid_ids).collect::<Vec<_>>();
 
         assert_eq!(ids.iter().sum::<usize>(), 4174379265);
-    }
-
-    #[test]
-    fn ids_are_validated_correctly() {
-        assert_eq!(is_id_valid(11), false);
-        assert_eq!(is_id_valid(22), false);
-        assert_eq!(is_id_valid(99), false);
-        assert_eq!(is_id_valid(1010), false);
-        assert_eq!(is_id_valid(1188511885), false);
-        assert_eq!(is_id_valid(222222), false);
-        assert_eq!(is_id_valid(446446), false);
-        assert_eq!(is_id_valid(38593859), false);
-
-        assert_eq!(is_id_valid(12), true);
-        assert_eq!(is_id_valid(256), true);
-        assert_eq!(is_id_valid(707), true);
-        assert_eq!(is_id_valid(1001), true);
     }
 
     #[test]
