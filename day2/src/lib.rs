@@ -209,6 +209,17 @@ mod tests {
     }
 
     #[test]
+    fn invalid_ids_produce_expected_full_total() {
+        let rs = parse_ranges(test_data()).unwrap();
+        let ids = rs
+            .iter()
+            .flat_map(find_invalid_ids)
+            .collect::<Vec<_>>();
+
+        assert_eq!(ids.iter().sum::<usize>(), 4174379265);
+    }
+
+    #[test]
     fn ids_are_validated_correctly() {
         assert_eq!(is_id_valid(11), false);
         assert_eq!(is_id_valid(22), false);
