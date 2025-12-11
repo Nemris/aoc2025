@@ -35,12 +35,9 @@ fn solve_part_1(ranges: &[RangeInclusive<usize>]) -> usize {
         .sum()
 }
 
-/// Solve part 2 of day 2.
+/// Solvespart 2 of day 2.
 fn solve_part_2(ranges: &[RangeInclusive<usize>]) -> usize {
-    ranges
-        .iter()
-        .flat_map(day2::find_invalid_ids)
-        .sum()
+    ranges.iter().flat_map(day2::find_invalid_ids).sum()
 }
 
 fn main() -> Result<(), Box<dyn error::Error>> {
