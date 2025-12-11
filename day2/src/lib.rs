@@ -80,16 +80,6 @@ pub fn is_id_valid(id: usize) -> bool {
     id / divisor != id % divisor
 }
 
-/// Computes the previous power of 10 smaller than `n`.
-///
-/// Returns 1 if `n` is 0.
-#[must_use]
-pub fn prev_power_of_10(n: usize) -> usize {
-    // The digits in a usize are always smaller than u32::MAX.
-    #[allow(clippy::cast_possible_truncation)]
-    10usize.pow(digits(n) as u32 - 1)
-}
-
 /// Computes the next power of 10 greater than `n`.
 #[must_use]
 pub fn next_power_of_10(n: usize) -> usize {
@@ -233,14 +223,6 @@ mod tests {
         assert_eq!(is_id_valid(256), true);
         assert_eq!(is_id_valid(707), true);
         assert_eq!(is_id_valid(1001), true);
-    }
-
-    #[test]
-    fn prev_power_of_10_is_calculated_correctly() {
-        assert_eq!(prev_power_of_10(0), 1);
-        assert_eq!(prev_power_of_10(11), 10);
-        assert_eq!(prev_power_of_10(999), 100);
-        assert_eq!(prev_power_of_10(1001), 1000);
     }
 
     #[test]
