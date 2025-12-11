@@ -108,9 +108,7 @@ pub fn guess_invalid_ids(r: &RangeInclusive<usize>, pattern_length: usize) -> Ve
         if pattern_chunks.ge(start_chunks) {
             break;
         }
-        for c in pattern_digits.chunks_mut(pattern_length) {
-            c.copy_from_slice(split_digits(join_digits(c) + 1).as_mut_slice());
-        }
+        increment_chunks(&mut pattern_digits, pattern_length);
     }
 
     let end_digits = split_digits(*r.end());
@@ -130,12 +128,23 @@ pub fn guess_invalid_ids(r: &RangeInclusive<usize>, pattern_length: usize) -> Ve
         }
 
         // Prepare the next pattern to check.
-        for c in pattern_digits.chunks_mut(pattern_length) {
-            c.copy_from_slice(split_digits(join_digits(c) + 1).as_mut_slice());
-        }
+        increment_chunks(&mut pattern_digits, pattern_length);
     }
 
     patterns
+}
+
+/// Divides `digits` in chunks, then increments all the resulting numbers by one in-place.
+///
+/// In order to ensure `digits.len()` remains the same, the increase is capped at the next power of
+/// 10 minus one.
+pub fn increment_chunks(digits: &mut [usize], chunk_size: usize) {
+    for c in digits.chunks_mut(chunk_size) {
+        if c.iter().all(|&n| n == 9) {
+            continue;
+        }
+        c.copy_from_slice(split_digits(join_digits(c) + 1).as_mut_slice());
+    }
 }
 
 /// Counts the digits in `n`.
@@ -317,6 +326,25 @@ mod tests {
         let r = RangeInclusive::new(1188511880usize, 1188511890usize);
         let v = vec![1188511885];
         assert_eq!(guess_invalid_ids(&r, 5), v);
+    }
+
+    #[test]
+    fn increment_by_chunk_is_performed_correctly() {
+        let mut ds = split_digits(101112);
+        increment_chunks(&mut ds, 2);
+        assert_eq!(ds, split_digits(111213));
+
+        let mut ds = split_digits(101112);
+        increment_chunks(&mut ds, 3);
+        assert_eq!(ds, split_digits(102113));
+
+        let mut ds = split_digits(2020202020);
+        increment_chunks(&mut ds, 1);
+        assert_eq!(ds, split_digits(3131313131));
+
+        let mut ds = split_digits(9999999998);
+        increment_chunks(&mut ds, 5);
+        assert_eq!(ds, split_digits(9999999999));
     }
 
     #[test]
