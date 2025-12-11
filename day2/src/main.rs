@@ -4,6 +4,7 @@ use std::env;
 use std::error;
 use std::fmt;
 use std::fs;
+use std::ops::RangeInclusive;
 
 #[derive(Debug)]
 enum Error {
@@ -20,6 +21,20 @@ impl fmt::Display for Error {
 
 impl error::Error for Error {}
 
+/// Solves part 1 of day 2.
+fn solve_part_1(ranges: &[RangeInclusive<usize>]) -> usize {
+    // Part 1 considers only IDs with a pattern repeated exactly twice to be invalid.
+    ranges
+        .iter()
+        .flat_map(day2::find_invalid_ids)
+        .filter(|&id| {
+            let d = day2::digits(id);
+            let v = day2::split_digits(id);
+            v[..d / 2] == v[d / 2..]
+        })
+        .sum()
+}
+
 fn main() -> Result<(), Box<dyn error::Error>> {
     let args = env::args().collect::<Vec<_>>();
     if args.len() != 2 {
@@ -28,7 +43,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     }
 
     let ranges = day2::parse_ranges(fs::read_to_string(&args[1])?.trim_end())?;
-    println!("Sum of invalid IDs: {}", day2::sum_invalid_ids(&ranges));
+    println!("Sum of invalid IDs: {}", solve_part_1(&ranges));
 
     Ok(())
 }

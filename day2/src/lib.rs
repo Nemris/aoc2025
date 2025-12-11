@@ -3,39 +3,20 @@
 use std::num::ParseIntError;
 use std::ops::RangeInclusive;
 
-pub fn sum_invalid_ids(ranges: &[RangeInclusive<usize>]) -> usize {
-    ranges.iter().filter_map(find_invalid_ids).flatten().sum()
-}
-
 /// Finds the invalid IDs in a range.
 #[must_use]
-pub fn find_invalid_ids(range: &RangeInclusive<usize>) -> Option<Vec<usize>> {
-    // Determine the actual bounds where invalid IDs may be found..
-    let start = if digits(*range.start()).is_multiple_of(2) {
-        *range.start()
-    } else {
-        next_power_of_10(*range.start())
-    };
-    let end = if digits(*range.end()).is_multiple_of(2) {
-        *range.end()
-    } else {
-        prev_power_of_10(*range.end())
-    };
+pub fn find_invalid_ids(range: &RangeInclusive<usize>) -> Vec<usize> {
+    let mut ids = vec![];
 
-    // We don't know if this can happen in the data, but we know it is invalid.
-    if start > end {
-        return None;
+    for r in compute_subranges(range) {
+        for l in guess_pattern_lengths(*r.start()) {
+            ids.extend_from_slice(&guess_invalid_ids(&r, l));
+        }
     }
+    ids.sort_unstable();
+    ids.dedup();
 
-    let invalid_ids = (start..=end)
-        .filter(|id| !is_id_valid(*id))
-        .collect::<Vec<_>>();
-
-    if invalid_ids.is_empty() {
-        None
-    } else {
-        Some(invalid_ids)
-    }
+    ids
 }
 
 /// Attempts to parse a string slice into a series of inclusive ranges.
@@ -221,9 +202,20 @@ mod tests {
 
     #[test]
     fn invalid_ids_produce_expected_total() {
+        // We're testing against the expected part 1 result here, therefore the invalid IDs must be
+        // filtered.
         let rs = parse_ranges(test_data()).unwrap();
+        let ids = rs
+            .iter()
+            .flat_map(find_invalid_ids)
+            .filter(|&id| {
+                let d = digits(id);
+                let v = split_digits(id);
+                v[..d / 2] == v[d / 2..]
+            })
+            .collect::<Vec<_>>();
 
-        assert_eq!(sum_invalid_ids(&rs), 1227775554);
+        assert_eq!(ids.iter().sum::<usize>(), 1227775554);
     }
 
     #[test]
@@ -272,17 +264,17 @@ mod tests {
     fn invalid_ids_are_identified_correctly() {
         let rs = parse_ranges(test_data()).unwrap();
         let expected = &[
-            Some(vec![11, 22]),
-            Some(vec![99]),
-            Some(vec![1010]),
-            Some(vec![1188511885]),
-            Some(vec![222222]),
-            None,
-            Some(vec![446446]),
-            Some(vec![38593859]),
-            None,
-            None,
-            None,
+            vec![11, 22],
+            vec![99, 111],
+            vec![999, 1010],
+            vec![1188511885],
+            vec![222222],
+            vec![],
+            vec![446446],
+            vec![38593859],
+            vec![565656],
+            vec![824824824],
+            vec![2121212121],
         ];
 
         for (r, e) in rs.iter().zip(expected) {
