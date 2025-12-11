@@ -94,41 +94,28 @@ pub fn next_power_of_10(n: usize) -> usize {
 /// divide the number of digits cleanly.
 #[must_use]
 pub fn guess_invalid_ids(r: &RangeInclusive<usize>, pattern_length: usize) -> Vec<usize> {
+    // First pass: identify the starting pattern.
     let mut pattern_digits = split_digits(*r.start())
         .chunks(pattern_length)
         .next()
         .expect("chunks should not be empty")
         .repeat(digits(*r.start()) / pattern_length);
-
-    // First pass: identify the starting pattern.
     let start_digits = split_digits(*r.start());
-    loop {
-        let pattern_chunks = pattern_digits.chunks(pattern_length);
-        let start_chunks = start_digits.chunks(pattern_length);
-        if pattern_chunks.ge(start_chunks) {
-            break;
-        }
+    while pattern_digits < start_digits {
         increment_chunks(&mut pattern_digits, pattern_length);
     }
 
-    let end_digits = split_digits(*r.end());
+    // Second pass: collect the patterns.
     let mut patterns = vec![];
-    loop {
-        let pattern_chunks = pattern_digits.chunks(pattern_length);
-        let end_chunks = end_digits.chunks(pattern_length);
-        if pattern_chunks.gt(end_chunks) {
-            break;
-        }
-
+    let end_digits = split_digits(*r.end());
+    while pattern_digits <= end_digits {
         patterns.push(join_digits(&pattern_digits));
+        let r = increment_chunks(&mut pattern_digits, pattern_length);
 
-        // Stop if increasing the pattern would bring us to the next power of 10.
-        if pattern_digits[..pattern_length].iter().all(|&x| x == 9) {
+        // Bail if we cannot increment any further.
+        if r.is_none() {
             break;
         }
-
-        // Prepare the next pattern to check.
-        increment_chunks(&mut pattern_digits, pattern_length);
     }
 
     patterns
